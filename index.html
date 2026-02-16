@@ -75,6 +75,12 @@
                 <button onclick="showTab('analytics')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
                     📊 Analytics
                 </button>
+                <button onclick="showTab('dashboard')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    📈 Dashboard
+                </button>
+                <button onclick="showTab('history')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    📜 Tarix
+                </button>
             </div>
         </div>
     </header>
@@ -278,6 +284,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">📈 Shaxsiy Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold mb-4">💰 Portfolio Qiymati</h3>
+                    <div class="text-4xl font-bold text-purple-400">245.5 NEAR</div>
+                    <p class="text-gray-400 text-sm mt-2">+12% o'tgan haftadan</p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold mb-4">🖼️ Aktiv Assetlar</h3>
+                    <div class="text-4xl font-bold text-pink-400" id="dashAssetCount">0</div>
+                    <p class="text-gray-400 text-sm mt-2">NFTlar va Fractional share'lar</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 class="text-xl font-bold mb-4">📑 Mening Investitsiyalarim</h3>
+                <div id="dashInvestments" class="space-y-3">
+                    <p class="text-gray-500">Hozircha investitsiyalar yo'q</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">📜 Savdolar Tarixi</h2>
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-700 text-gray-400 text-sm">
+                                <th class="pb-4">Asset</th>
+                                <th class="pb-4">Tur</th>
+                                <th class="pb-4">Miqdor</th>
+                                <th class="pb-4">Narx</th>
+                                <th class="pb-4">Sana</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="text-sm">
+                            <!-- Tarix elementlari shu yerda chiqadi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -359,12 +411,67 @@
         let isWalletConnected = false;
         let isDarkMode = true;
         let commandHistory = [];
+        let tradeHistory = [
+            { id: 1, asset: "Tesla Model 3", type: "Sotib olish", amount: "5 share", price: "2.5 NEAR", date: "2026-02-10" },
+            { id: 2, asset: "Lux Villa", type: "Sotib olish", amount: "1 NFT", price: "1000 NEAR", date: "2026-02-05" }
+        ];
         let currentFilter = 'all';
 
         // Initialize App
         function init() {
             renderListings();
             setupFormHandlers();
+            renderHistory();
+            renderDashboard();
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-500', 'text-white');
+                btn.classList.add('hover:bg-gray-700');
+            });
+            event.currentTarget.classList.add('bg-purple-500', 'text-white');
+            event.currentTarget.classList.remove('hover:bg-gray-700');
+
+            if (tabName === 'history') renderHistory();
+            if (tabName === 'dashboard') renderDashboard();
+        }
+
+        function renderHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = tradeHistory.map(h => `
+                <tr class="border-b border-gray-700 hover:bg-gray-700/50 transition">
+                    <td class="py-4 font-semibold">${h.asset}</td>
+                    <td class="py-4"><span class="px-2 py-1 rounded text-xs ${h.type === 'Sotib olish' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${h.type}</span></td>
+                    <td class="py-4 text-gray-400">${h.amount}</td>
+                    <td class="py-4 text-purple-400 font-bold">${h.price}</td>
+                    <td class="py-4 text-gray-500">${h.date}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="py-8 text-center text-gray-500">Tarix bo\'sh</td></tr>';
+        }
+
+        function renderDashboard() {
+            const dashAssets = document.getElementById('dashAssetCount');
+            const dashInvestments = document.getElementById('dashInvestments');
+            if (!dashAssets || !dashInvestments) return;
+
+            dashAssets.textContent = tradeHistory.length;
+            dashInvestments.innerHTML = tradeHistory.map(h => `
+                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl">💎</span>
+                        <div>
+                            <div class="font-semibold">${h.asset}</div>
+                            <div class="text-sm text-gray-400">${h.amount} - ${h.price}</div>
+                        </div>
+                    </div>
+                    <div class="text-purple-400 font-bold">Aktiv</div>
+                </div>
+            `).join('') || '<p class="text-gray-500">Hozircha investitsiyalar yo\'q</p>';
         }
 
         // Setup Form Handlers
@@ -665,6 +772,8 @@
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', init);
+        // Initialize App
+        init();
     </script>
 </body>
   </html>
