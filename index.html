@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarketNear - Decentralized Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(to right, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .btn-hover:hover {
+            transform: scale(1.05);
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="text-4xl animate-bounce">🏪</div>
+                    <div>
+                        <h1 class="text-3xl font-bold gradient-text">MarketNear</h1>
+                        <p class="text-sm text-gray-400">Decentralized Marketplace on NEAR</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleDarkMode()" class="p-3 rounded-lg hover:bg-gray-700 transition">
+                        <span id="themeIcon" class="text-2xl">☀️</span>
+                    </button>
+                    
+                    <button id="walletBtn" onclick="connectWallet()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold btn-hover transition shadow-lg">
+                        🔗 Hamyonni Ulash
+                    </button>
+                    
+                    <div id="walletInfo" class="hidden px-4 py-2 rounded-lg bg-gray-700 border border-gray-600">
+                        <div class="text-xs text-gray-400">✅ Ulangan</div>
+                        <div class="font-mono text-sm" id="accountId">user.testnet</div>
+                        <div class="text-xs text-green-400 mt-1">💰 125.5 NEAR</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <div class="flex space-x-4 mt-4 overflow-x-auto">
+                <button onclick="showTab('marketplace')" class="tab-btn px-4 py-2 rounded-lg transition bg-purple-500 text-white whitespace-nowrap">
+                    🏪 Marketplace
+                </button>
+                <button onclick="showTab('my-nfts')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    🖼️ Mening NFTlarim
+                </button>
+                <button onclick="showTab('create')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    ➕ NFT Yaratish
+                </button>
+                <button onclick="showTab('ai-agent')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    🤖 AI Agent
+                </button>
+                <button onclick="showTab('analytics')" class="tab-btn px-4 py-2 rounded-lg transition hover:bg-gray-700 whitespace-nowrap">
+                    📊 Analytics
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Marketplace Tab -->
+        <div id="marketplace-tab" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">🏪 Aktiv Listinglar</h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-gray-400">Jami:</span>
+                    <span class="text-2xl font-bold text-purple-400" id="totalListings">3</span>
+                </div>
+            </div>
+            
+            <!-- Filter -->
+            <div class="mb-6 flex flex-wrap gap-2">
+                <button onclick="filterListings('all')" class="filter-btn px-4 py-2 bg-purple-500 rounded-lg text-sm">Hammasi</button>
+                <button onclick="filterListings('fractional')" class="filter-btn px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">💎 Fractional</button>
+                <button onclick="filterListings('full')" class="filter-btn px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm">🎯 To'liq</button>
+            </div>
+            
+            <div id="listings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Listings will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- My NFTs Tab -->
+        <div id="my-nfts-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">🖼️ Mening NFTlarim</h2>
+            <div id="myNFTsContent" class="bg-gray-800 rounded-xl p-12 text-center border border-gray-700">
+                <div class="text-6xl mb-4">🔒</div>
+                <p class="text-xl mb-4">NFTlaringizni ko'rish uchun hamyoningizni ulang</p>
+                <button onclick="connectWallet()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold btn-hover transition">
+                    Hamyonni Ulash
+                </button>
+            </div>
+        </div>
+
+        <!-- Create NFT Tab -->
+        <div id="create-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">➕ Yangi NFT Yaratish</h2>
+            <div class="bg-gray-800 rounded-xl p-8 border border-gray-700 max-w-2xl mx-auto">
+                <form onsubmit="createNFT(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">NFT Nomi *</label>
+                        <input type="text" id="nftTitle" required class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="Masalan: Premium Avtomobil">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Emoji / Icon</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="nftEmoji" class="flex-1 px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="🚗">
+                            <div class="flex space-x-1">
+                                <button type="button" onclick="setEmoji('🚗')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-2xl">🚗</button>
+                                <button type="button" onclick="setEmoji('🏠')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-2xl">🏠</button>
+                                <button type="button" onclick="setEmoji('🛥️')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-2xl">🛥️</button>
+                                <button type="button" onclick="setEmoji('💎')" class="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-2xl">💎</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Tavsif</label>
+                        <textarea id="nftDescription" rows="3" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="NFT haqida ma'lumot..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Narx (NEAR) *</label>
+                        <input type="number" id="nftPrice" required min="0" step="0.01" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="10">
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 p-4 bg-gray-700 rounded-lg">
+                        <input type="checkbox" id="fractional" class="w-5 h-5 rounded">
+                        <label for="fractional" class="text-sm font-medium">💎 Fractional Ownership (Bo'lib egalik qilish)</label>
+                    </div>
+                    
+                    <div id="sharesSection" class="hidden">
+                        <label class="block text-sm font-medium mb-2">Share Soni</label>
+                        <input type="number" id="shares" min="1" value="100" class="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                        <p class="text-xs text-gray-400 mt-1">Har bir share narxi: <span id="sharePrice">0.10</span> NEAR</p>
+                    </div>
+                    
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold text-lg btn-hover transition shadow-lg">
+                        🚀 NFT Yaratish va Ro'yxatga Qo'shish
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI Agent Tab -->
+        <div id="ai-agent-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">🤖 AI Trading Agent</h2>
+            <div class="bg-gray-800 rounded-xl p-8 border border-gray-700 max-w-3xl mx-auto">
+                <div class="mb-6">
+                    <div class="flex items-start space-x-3 mb-4">
+                        <div class="text-4xl">🤖</div>
+                        <div class="flex-1">
+                            <p class="text-xl font-semibold mb-2">AI Agent Yordam</p>
+                            <p class="text-gray-400">Natural language buyruqlar bilan NFT va share'larni boshqaring</p>
+                        </div>
+                    </div>
+                    
+                    <div id="agentResponse" class="hidden bg-gray-700 rounded-lg p-4 mb-4 animate-slide-in">
+                        <pre class="whitespace-pre-wrap font-mono text-sm" id="agentResponseText"></pre>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2 mb-4">
+                    <input type="text" id="commandInput" onkeypress="if(event.key==='Enter') handleCommand()" class="flex-1 px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:outline-none" placeholder="Masalan: Buy 5, Sell 10, Balance, List">
+                    <button onclick="handleCommand()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold btn-hover transition shadow-lg">
+                        Yuborish
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button onclick="quickCommand('Buy 5')" class="px-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-sm">
+                        💰 5 ta Sotib Ol
+                    </button>
+                    <button onclick="quickCommand('Sell 10')" class="px-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-sm">
+                        💸 10 ta Sot
+                    </button>
+                    <button onclick="quickCommand('Balance')" class="px-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-sm">
+                        📊 Balans
+                    </button>
+                    <button onclick="quickCommand('List')" class="px-4 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-sm">
+                        📋 Ro'yxat
+                    </button>
+                </div>
+                
+                <!-- Command History -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold mb-3">📜 Buyruqlar Tarixi</h3>
+                    <div id="commandHistory" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-gray-500 text-sm">Hozircha buyruqlar yo'q</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content hidden">
+            <h2 class="text-3xl font-bold mb-6">📊 Analytics & Statistics</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 shadow-lg">
+                    <div class="text-4xl mb-2">💰</div>
+                    <div class="text-sm text-purple-200">Jami Hajm</div>
+                    <div class="text-3xl font-bold">1,550 NEAR</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-pink-500 to-pink-700 rounded-xl p-6 shadow-lg">
+                    <div class="text-4xl mb-2">📈</div>
+                    <div class="text-sm text-pink-200">Aktiv Savdolar</div>
+                    <div class="text-3xl font-bold">127</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 shadow-lg">
+                    <div class="text-4xl mb-2">👥</div>
+                    <div class="text-sm text-blue-200">Foydalanuvchilar</div>
+                    <div class="text-3xl font-bold">245</div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 class="text-xl font-bold mb-4">📊 Eng Ko'p Sotiladigan NFTlar</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🚗</span>
+                            <div>
+                                <div class="font-semibold">Tesla Model 3</div>
+                                <div class="text-sm text-gray-400">50 NEAR</div>
+                            </div>
+                        </div>
+                        <div class="text-green-400 font-bold">+25%</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🛥️</span>
+                            <div>
+                                <div class="font-semibold">Premium Yacht</div>
+                                <div class="text-sm text-gray-400">500 NEAR</div>
+                            </div>
+                        </div>
+                        <div class="text-green-400 font-bold">+15%</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">🏡</span>
+                            <div>
+                                <div class="font-semibold">Lux Villa</div>
+                                <div class="text-sm text-gray-400">1000 NEAR</div>
+                            </div>
+                        </div>
+                        <div class="text-red-400 font-bold">-5%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 border-t border-gray-700 mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+                <div>
+                    <h3 class="font-bold text-lg mb-3 gradient-text">MarketNear</h3>
+                    <p class="text-gray-400 text-sm">NEAR Protocol asosida qurilgan decentralized marketplace platformasi.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-3">Linklar</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-purple-400">Hujjatlar</a></li>
+                        <li><a href="#" class="hover:text-purple-400">API</a></li>
+                        <li><a href="#" class="hover:text-purple-400">Smart Contracts</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-3">Aloqa</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>📧 info@marketnear.app</li>
+                        <li>🐦 @MarketNear</li>
+                        <li>💬 Discord</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="text-center border-t border-gray-700 pt-6">
+                <p class="text-gray-400">Built with ❤️ on NEAR Protocol</p>
+                <p class="text-sm text-gray-500 mt-2">© 2026 MarketNear - Decentralized Marketplace</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initial Listings Data
+        let listings = [
+            {
+                id: 1,
+                title: "Yangi avtomobil - Tesla Model 3",
+                description: "2024 yil Tesla Model 3, to'liq avtopilot",
+                price: "50 NEAR",
+                priceValue: 50,
+                image: "🚗",
+                seller: "seller1.testnet",
+                fractional: true,
+                shares: 100,
+                availableShares: 100
+            },
+            {
+                id: 2,
+                title: "Premium Yacht",
+                description: "60 futlik hashamatli yaxta, to'liq jihozlangan",
+                price: "500 NEAR",
+                priceValue: 500,
+                image: "🛥️",
+                seller: "seller2.testnet",
+                fractional: true,
+                shares: 1000,
+                availableShares: 850
+            },
+            {
+                id: 3,
+                title: "Lux Villa",
+                description: "5 xonali villa, dengiz ko'rinishi bilan",
+                price: "1000 NEAR",
+                priceValue: 1000,
+                image: "🏡",
+                seller: "seller3.testnet",
+                fractional: false,
+                shares: 1,
+                availableShares: 1
+            }
+        ];
+
+        let isWalletConnected = false;
+        let isDarkMode = true;
+        let commandHistory = [];
+        let currentFilter = 'all';
+
+        // Initialize App
+        function init() {
+            renderListings();
+            setupFormHandlers();
+        }
+
+        // Setup Form Handlers
+        function setupFormHandlers() {
+            const fractionalCheckbox = document.getElementById('fractional');
+            const sharesSection = document.getElementById('sharesSection');
+            const priceInput = document.getElementById('nftPrice');
+            const sharesInput = document.getElementById('shares');
+            
+            fractionalCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    sharesSection.classList.remove('hidden');
+                    updateSharePrice();
+                } else {
+                    sharesSection.classList.add('hidden');
+                }
+            });
+            
+            priceInput.addEventListener('input', updateSharePrice);
+            sharesInput.addEventListener('input', updateSharePrice);
+        }
+
+        // Update Share Price
+        function updateSharePrice() {
+            const price = parseFloat(document.getElementById('nftPrice').value) || 0;
+            const shares = parseInt(document.getElementById('shares').value) || 1;
+            const sharePrice = (price / shares).toFixed(4);
+            document.getElementById('sharePrice').textContent = sharePrice;
+        }
+
+        // Set Emoji
+        function setEmoji(emoji) {
+            document.getElementById('nftEmoji').value = emoji;
+        }
+
+        // Render Listings
+        function renderListings() {
+            const grid = document.getElementById('listings-grid');
+            grid.innerHTML = '';
+            
+            let filteredListings = listings;
+            if (currentFilter === 'fractional') {
+                filteredListings = listings.filter(l => l.fractional);
+            } else if (currentFilter === 'full') {
+                filteredListings = listings.filter(l => !l.fractional);
+            }
+            
+            document.getElementById('totalListings').textContent = filteredListings.length;
+            
+            filteredListings.forEach(item => {
+                const percentage = (item.availableShares / item.shares) * 100;
+                const card = `
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 card-hover transition">
+                        <div class="text-7xl mb-4 text-center">${item.image}</div>
+                        <h3 class="text-xl font-bold mb-2">${item.title}</h3>
+                        <p class="text-sm text-gray-400 mb-4">${item.description || ''}</p>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Narx:</span>
+                                <span class="font-bold text-purple-400">${item.price}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Sotuvchi:</span>
+                                <span class="font-mono text-xs">${item.seller}</span>
+                            </div>
+                            ${item.fractional ? `
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Mavjud Share:</span>
+                                    <span class="text-green-400 font-semibold">${item.availableShares}/${item.shares}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Share narxi:</span>
+                                    <span class="text-blue-400">${(item.priceValue / item.shares).toFixed(2)} NEAR</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${item.fractional ? `
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>Sotilgan</span>
+                                    <span>${Math.round(100 - percentage)}%</span>
+                                </div>
+                                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500" style="width: ${percentage}%"></div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <button onclick="buyItem(${item.id})" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-semibold btn-hover transition shadow-lg">
+                            ${item.fractional ? '💎 Share Sotib Olish' : '🛒 Sotib Olish'}
+                        </button>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        // Filter Listings
+        function filterListings(filter) {
+            currentFilter = filter;
+            renderListings();
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-500');
+                btn.classList.add('bg-gray-700');
+            });
+            event.target.classList.add('bg-purple-500');
+            event.target.classList.remove('bg-gray-700');
+        }
+
+        // Tab Management
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-500', 'text-white');
+                btn.classList.add('hover:bg-gray-700');
+            });
+            
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            event.target.classList.add('bg-purple-500', 'text-white');
+            event.target.classList.remove('hover:bg-gray-700');
+        }
+
+        // Connect Wallet
+        function connectWallet() {
+            isWalletConnected = true;
+            document.getElementById('walletBtn').classList.add('hidden');
+            document.getElementById('walletInfo').classList.remove('hidden');
+            
+            // Update My NFTs tab
+            document.getElementById('myNFTsContent').innerHTML = `
+                <div class="text-6xl mb-4">📦</div>
+                <p class="text-xl">Hozircha NFTlaringiz yo'q</p>
+                <p class="text-gray-400 mt-2">NFT yarating yoki marketplace dan sotib oling!</p>
+            `;
+            
+            showNotification('✅ Hamyon muvaffaqiyatli ulandi!', 'success');
+        }
+
+        // Buy Item
+        function buyItem(itemId) {
+            if (!isWalletConnected) {
+                showNotification('⚠️ Iltimos, avval hamyoningizni ulang!', 'warning');
+                connectWallet();
+                return;
+            }
+            const item = listings.find(l => l.id === itemId);
+            showNotification(`✅ "${item.title}" sotib olish jarayoni boshlandi!`, 'success');
+            
+            // Simulate purchase
+            setTimeout(() => {
+                if (item.fractional && item.availableShares > 0) {
+                    item.availableShares -= 5;
+                    renderListings();
+                    showNotification(`🎉 5 ta share muvaffaqiyatli sotib olindi!`, 'success');
+                }
+            }, 2000);
+        }
+
+        // Create NFT
+        function createNFT(event) {
+            event.preventDefault();
+            
+            if (!isWalletConnected) {
+                showNotification('⚠️ Iltimos, avval hamyoningizni ulang!', 'warning');
+                connectWallet();
+                return;
+            }
+            
+            const newListing = {
+                id: listings.length + 1,
+                title: document.getElementById('nftTitle').value,
+                description: document.getElementById('nftDescription').value,
+                price: document.getElementById('nftPrice').value + ' NEAR',
+                priceValue: parseFloat(document.getElementById('nftPrice').value),
+                image: document.getElementById('nftEmoji').value || '🎁',
+                seller: 'user.testnet',
+                fractional: document.getElementById('fractional').checked,
+                shares: parseInt(document.getElementById('shares').value) || 1,
+                availableShares: parseInt(document.getElementById('shares').value) || 1
+            };
+            
+            listings.push(newListing);
+            renderListings();
+            event.target.reset();
+            document.getElementById('sharesSection').classList.add('hidden');
+            showTab('marketplace');
+            showNotification('✅ NFT muvaffaqiyatli yaratildi va ro\'yxatga qo\'shildi!', 'success');
+        }
+
+        // AI Agent Command Handler
+        function handleCommand() {
+            const command = document.getElementById('commandInput').value.toLowerCase();
+            const responseDiv = document.getElementById('agentResponse');
+            const responsePre = document.getElementById('agentResponseText');
+            
+            if (!command.trim()) return;
+            
+            // Add to history
+            addCommandToHistory(command);
+            
+            let response = '';
+            
+            if (command.includes('buy') || command.includes('sotib ol')) {
+                const numbers = command.match(/\d+/);
+                const amount = numbers ? numbers[0] : '1';
+                response = `✅ ${amount} ta share sotib olish uchun tayyorlanmoqda...\n⏳ Smart contract bilan aloqa o'rnatilmoqda...`;
+                responsePre.textContent = response;
+                responseDiv.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    responsePre.textContent = `✅ Muvaffaqiyatli!\n💎 ${amount} ta share sizning hisobingizga qo'shildi.\n💰 Jami sarflandi: ${amount * 0.5} NEAR`;
+                }, 2000);
+            } else if (command.includes('sell') || command.includes('sot')) {
+                const numbers = command.match(/\d+/);
+                const amount = numbers ? numbers[0] : '1';
+                response = `✅ ${amount} ta share sotish uchun tayyorlanmoqda...\n⏳ Market orderlar tekshirilmoqda...`;
+                responsePre.textContent = response;
+                responseDiv.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    responsePre.textContent = `✅ ${amount} ta share muvaffaqiyatli sotildi!\n💰 Qabul qilindi: ${amount * 0.5} NEAR\n📊 Yangi balans: 130.5 NEAR`;
+                }, 2000);
+            } else if (command.includes('balance') || command.includes('balans')) {
+                response = `💰 Sizning balansingiz:\n\n💵 NEAR: 125.5\n📊 Sharelar: 45 ta turli aktivlarda\n\n🚗 Tesla Model 3: 10 share (5 NEAR)\n🛥️ Yacht: 15 share (7.5 NEAR)\n🏡 Villa: 20 share (20 NEAR)`;
+            } else if (command.includes('list') || command.includes('ro\'yxat') || command.includes('royxat')) {
+                response = `📋 Sizning aktivlaringiz:\n\n🚗 Avtomobil share: 10 ta (5 NEAR)\n🛥️ Yacht share: 15 ta (7.5 NEAR)\n🏡 Villa share: 20 ta (20 NEAR)\n\n💰 Jami qiymat: 32.5 NEAR`;
+            } else if (command.includes('help') || command.includes('yordam')) {
+                response = `🤖 AI Agent buyruqlari:\n\n💰 "Buy 5" - 5 ta share sotib olish\n💸 "Sell 10" - 10 ta share sotish\n📊 "Balance" - balansni ko'rish\n📋 "List" - aktivlarni ko'rish\n❓ "Help" - yordam`;
+            } else if (command.includes('stats') || command.includes('statistika')) {
+                response = `📊 Marketplace Statistikasi:\n\n📈 Jami Hajm: 1,550 NEAR\n🔥 Aktiv Savdolar: 127 ta\n👥 Foydalanuvchilar: 245\n⭐ Eng mashur NFT: Tesla Model 3`;
+            } else {
+                response = `🤔 Buyruq tushunilmadi.\n\n🤖 Yordam uchun "Help" yozing yoki quyidagi tugmalardan foydalaning.`;
+            }
+            
+            responseDiv.classList.remove('hidden');
+            responsePre.textContent = response;
+            document.getElementById('commandInput').value = '';
+        }
+
+        // Quick Command
+        function quickCommand(cmd) {
+            document.getElementById('commandInput').value = cmd;
+            handleCommand();
+        }
+
+        // Add Command to History
+        function addCommandToHistory(command) {
+            const historyDiv = document.getElementById('commandHistory');
+            const time = new Date().toLocaleTimeString('uz-UZ');
+            
+            commandHistory.unshift({ command, time });
+            
+            if (commandHistory.length > 5) {
+                commandHistory = commandHistory.slice(0, 5);
+            }
+            
+            historyDiv.innerHTML = commandHistory.map(item => `
+                <div class="text-sm bg-gray-700 p-2 rounded">
+                    <span class="text-gray-400">${item.time}</span> - 
+                    <span class="text-purple-400">${item.command}</span>
+                </div>
+            `).join('');
+        }
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.getElementById('themeIcon').textContent = isDarkMode ? '☀️' : '🌙';
+            showNotification(isDarkMode ? '🌙 Dark mode yoqildi' : '☀️ Light mode yoqildi', 'info');
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: 'from-green-500 to-green-600',
+                warning: 'from-yellow-500 to-yellow-600',
+                error: 'from-red-500 to-red-600',
+                info: 'from-purple-500 to-pink-500'
+            };
+            
+            notification.className = `fixed top-20 right-4 bg-gradient-to-r ${colors[type]} text-white px-6 py-4 rounded-lg shadow-2xl z-50 animate-slide-in max-w-sm`;
+            notification.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="flex-1">${message}</div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">✕</button>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                notification.style.transition = 'all 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+  </html>
